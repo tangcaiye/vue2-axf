@@ -1,0 +1,27 @@
+/*不换行*/
+.no-wrap(){
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/*扩展点击区域*/
+.extend-click(){
+  position: relative;
+  &:before{
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+  } 
+}
+.scale(@scale){
+  -webkit-transform: scale(@scale);
+  -ms-transform: scale(@scale);
+  -o-transform: scale(@scale);
+  transform: scale(@scale);
+}
+
+  

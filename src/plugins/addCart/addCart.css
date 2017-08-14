@@ -1,0 +1,12 @@
+.add-cart-item{
+  position: fixed;
+  -webkit-transform: scale(0.8) rotate(0);
+  -ms-transform: scale(0.8) rotate(0);
+  -o-transform: scale(0.8) rotate(0);
+  transform: scale(0.8) rotate(0);
+  opacity: 0.9;
+  -webkit-transition: all 0.8s cubic-bezier(0.58,-1.15, 0.99, 1.07);
+  -o-transition: all 0.8s cubic-bezier(0.58,-1.15, 0.99, 1.07);
+  transition: all 0.8s cubic-bezier(0.58,-1.15, 0.99, 1.07);
+  border-radius: 50%;
+}

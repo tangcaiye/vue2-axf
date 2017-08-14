@@ -1,0 +1,10 @@
+{
+  "/bannar": "/bannar",
+  "/bannar/:id": "/bannar/:id",
+  "/classifys": "/classifys",
+  "/classifys/:id": "/classifys/:id",
+  "/classifys/:id/products": "/classifys/:id/products",
+  "/citys": "/citys",
+  "/users": "/users",
+  "/users/:id": "/users/:id"
+}
