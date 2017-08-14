@@ -4097,46 +4097,28 @@
       "unit": 202,
       "brand": "收过再",
       "expiration": 2.1,
-      "num": 3,
+      "num": 5,
       "userId": 1,
       "selected": true,
       "id": 1
     },
     {
-      "product_id": 5,
-      "cids": 0,
+      "product_id": 2,
+      "cids": 1,
       "imgs": {
-        "small": "http://dummyimage.com/355x355/f2e279&text=看者已量老)",
-        "big": "http://dummyimage.com/500x500/be79f2&text=约北术商习)"
+        "small": "http://dummyimage.com/355x355/79f2c4&text=连认林备始)",
+        "big": "http://dummyimage.com/500x500/f2a079&text=段般九布想值属)"
       },
-      "title": "生切感生南则",
-      "details": "九子南石又老军角阶明引保与计本东。信务切县况起公用车第将何律连。器型种目须层任连去到出矿。",
-      "price": 19.8,
-      "unit": 398,
-      "brand": "已完周安状",
-      "expiration": 2.8,
+      "title": "书放料还代车把",
+      "details": "应性矿基则专高力指层员例铁领交儿新。下济布方起七何感然革可统口道。技车南书也观己理米很手断领。众响广温专圆于易龙型放际号列。来高农他主离照江其总持生林是今调组。",
+      "price": 4.8,
+      "unit": 259,
+      "brand": "管场科直那",
+      "expiration": 2.6,
       "num": 1,
       "userId": 1,
       "selected": true,
-      "id": 2
-    },
-    {
-      "product_id": 52,
-      "cids": 0,
-      "imgs": {
-        "small": "http://dummyimage.com/355x355/79f2e0&text=严的却打)",
-        "big": "http://dummyimage.com/500x500/f2bd79&text=件因下般队叫相)"
-      },
-      "title": "人更质路打严装",
-      "details": "京立已处厂心位半务前民量本思切热。好共论日按因儿美领基件海。石声直门计装才油来节学具片按。",
-      "price": 15.5,
-      "unit": 152,
-      "brand": "教离公厂",
-      "expiration": 1.2,
-      "num": 1,
-      "userId": 1,
-      "selected": true,
-      "id": 3
+      "id": 4
     }
   ],
   "collects": [],
