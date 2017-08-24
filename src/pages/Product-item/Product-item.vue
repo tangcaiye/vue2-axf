@@ -30,6 +30,7 @@
       </div>
       <div class="product-properties">
         <div class="title">图文详情</div>
+        <p>{{productDetail.details}}</p>
       </div>
     </div>
   </div>
@@ -136,6 +137,13 @@ export default {
 .content-word{
   padding-left: 1.5rem;
   color: #333;
+}
+.product-properties{
+  p{
+    line-height: 1.5;
+    color: #e53333;
+    font-size: 14px;
+  }
 }
 </style>
 
