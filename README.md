@@ -3,7 +3,7 @@
 > 爱鲜蜂购物商城前端源代码，技术栈为vue2+vuex+vue-router,模拟数据使用mockjs,*RESTful* api使用的`json-server`.地图使用百度地图api
 
 ## 效果演示
-![Markdown](http://i2.bvimg.com/605174/ccaf354e7f55be18.gif)
+<img src="http://i2.bvimg.com/605174/ccaf354e7f55be18.gif" />
 
 ## 启动项目
 
