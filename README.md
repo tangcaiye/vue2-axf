@@ -30,5 +30,3 @@ npm run build --report
 ## mock数据
 
 mock数据的设置文件为根目录下的`mock.js`,输出的数据文件为根目录下的`db.json`
-
-[![img](https://github.com/hilongjw/vue-dragging/raw/master/preview.gif)](https://github.com/hilongjw/vue-dragging/blob/master/preview.gif)
