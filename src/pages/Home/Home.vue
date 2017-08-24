@@ -17,7 +17,7 @@
           <img class="category-item-banner" :src="item.imgs.small">
           <ul class="acts-category-item-goodsList">
             <!-- v-if限制显示的数量 -->
-            <li v-for="(pro,ind) in item.products" v-if="ind < 3">
+            <router-link tag="li" v-for="(pro,ind) in item.products" :key="pro.product_id" :to="'/product-item/'+pro.product_id" v-if="ind < 3">
               <img v-lazy="pro.imgs.small" :ref="'item'+ind+index">
               <p class="category-name">{{pro.title}}</p>
               <div class="product-specifics">
@@ -27,7 +27,7 @@
                 </div>
                 <div class="product-specifics-right" @click="addNum(pro, ind, index)">+</div>
               </div>
-            </li>
+            </router-link>
           </ul>
         </li>
       </ul>
