@@ -5,6 +5,8 @@
 ## 效果演示
 <img src="http://i2.bvimg.com/605174/c1840d854be3c7b3.gif" />
 
+<img src="http://i1.bvimg.com/605174/31b982cf95194d45.jpg" width="250" />
+
 ## 启动项目
 
 ``` bash
