@@ -9,7 +9,7 @@
         </router-link>
       </div>
       <ul class="acts-category">
-        <li class="acts-category-item" v-for="(item,index) in classifys">
+        <li class="acts-category-item" v-for="(item,index) in classifys" :key="item.classify_id">
           <div class="acts-category-title">
             <span>{{item.classify_title}}</span>
             <a href="#/category">更多&gt;</a>
