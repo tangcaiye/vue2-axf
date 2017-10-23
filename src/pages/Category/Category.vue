@@ -100,7 +100,6 @@ export default {
       function sortNumberDown (a, b) {
         return b.price - a.price
       }
-
       // 如果还没获取到商品的数据就返回一个空对象
       if (this.activeClassifysProduct.products === undefined) {
         return {}
