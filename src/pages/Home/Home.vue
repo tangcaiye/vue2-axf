@@ -61,7 +61,7 @@ export default {
     addNum (item, ind, index) {
       if (this.userInfo.id !== undefined) {
         // 添加到购物车的动画效果
-        let pos = this.$refs['item' + ind + index][0].getBoundingClientRect()
+        let pos = this.$refs['item' + ind + index][0].getBoundingClientRect()//这个方法返回一个矩形对象，包含四个属性：left、top、right和bottom。分别表示元素各边与页面上边和左边的距离。
         let cartPos = this.$store.state.cartPos
         let obj = {
           src: item.imgs.small,
@@ -77,7 +77,7 @@ export default {
           }
         }
         this.$addCart(obj)
-
+  
         this.$store.dispatch('addNum', item)
           .then((data) => {
             if (data.status) {
