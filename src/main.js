@@ -9,13 +9,17 @@ import '@/styles/reset.js'
 import '@/styles/index.less'
 // 引入vuex
 import store from './store'
-
+// 头部进度条插件->用于切换页面时候
+import NProgress from 'nprogress'
+import 'nprogress/nprogress.css'
 
 // 引入路由
 import router from './router'
 // 路由拦截器(导航守卫),控制tabBar的显示隐藏
 router.beforeEach((to, from, next) => {
   // console.log(to, from)
+  // 路由跳转开始进度效果
+  NProgress.start()
   let path = to.path
   if (path === '/' || path === '/category' || path === '/cart' || path === '/mine') {
     store.state.tabBarShow = true
@@ -24,7 +28,10 @@ router.beforeEach((to, from, next) => {
   }
   next()
 })
-
+router.afterEach((to, from) => {
+  // 路由跳转结束进度结束
+  NProgress.done()
+})
 // 引入mintui
 import { Swipe, SwipeItem, Indicator, Lazyload, MessageBox } from 'mint-ui'
 

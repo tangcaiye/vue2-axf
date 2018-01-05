@@ -6529,8 +6529,8 @@
       "product_img": "http://dummyimage.com/80x80/79d6f2&text=尹超",
       "product_name": "广叫市六",
       "product_price": 39.5,
-      "checked": false,
-      "num": 9,
+      "checked": true,
+      "num": 8,
       "id": 1
     }
   ],

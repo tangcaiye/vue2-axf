@@ -15,6 +15,7 @@
     "fastclick": "^1.0.6",
     "jsonp": "^0.2.1",
     "mint-ui": "^2.2.13",
+    "nprogress": "^0.2.0",
     "underscore": "^1.8.3",
     "vue": "^2.5.2",
     "vue-router": "^3.0.1",
