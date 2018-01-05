@@ -4,12 +4,12 @@
       <span></span>
       首页
     </router-link>
-    <router-link to="/category" class="current">
+    <router-link to="/category" class="current" ref="cateEl">
       <span></span>
       闪送超市
     </router-link>
-    <router-link to="/cart" tag="a" class="cart" ref="cartEl">
-      <var v-if="cartsLen>0" :class="{active: cartActive}">{{cartsLen}}</var>
+    <router-link to="/cart" class="cart"  ref="cartEl">
+      <var v-if="cartsLen > 0" :class="{'active': tabBarActive}">{{cartsLen}}</var>
       <span></span>
       购物车
     </router-link>
@@ -19,47 +19,70 @@
     </router-link>
   </nav>
 </template>
-<script type="text/javascript">
+<script>
 export default {
+  data () {
+    return {
+      tabBarActive: false
+    }
+  },
+  // dom结构创建完成执行
   mounted () {
     // 获取cart标签的位置
     let cartPos = this.$refs.cartEl.$el.getBoundingClientRect()
     this.$store.commit('CART_POS', cartPos)
   },
+  // 计算内部不能写异步代码
   computed: {
     cartsLen () {
       return this.$store.getters.cartsLen
     },
-    cartActive () {
-      return this.$store.state.cartActive
+    cartPos () {
+      return this.$store.state.cartPos
+    },
+    tabBarShow () {
+      return this.$store.state.tabBarShow
+    }
+  },
+  watch: {
+    cartsLen () {
+      this.tabBarActive = true
+      setTimeout(() => {
+        this.tabBarActive = false
+      }, 300)
+    },
+    tabBarShow () {
+      // 监听tabBarShow的变化,如果为true了的话就获取位置信息
+      if (!this.cartPos.width) {
+        let cartPos = this.$refs.cartEl.$el.getBoundingClientRect()
+        this.$store.commit('CART_POS', cartPos)
+      }
     }
   }
 }
 </script>
-<style lang="less" scoped>
-@import url("../../common/styles/variable.less");
-@import url("../../common/styles/mixin.less");
 
+<style lang="less" scoped>
+@import url("../../styles/var.less");
+@import url("../../styles/mixin.less");
 nav{
   position: fixed;
   bottom: 0;
   width: 100%;
   height: 5rem;
   background-color: #fff;
+  display: flex;
   a{
-    float: left;
-    width: 25%;
+    flex: 1;
     height: 4rem;
     padding-top: 1rem;
     text-align: center;
     color: #777;
     position: relative;
-    text-decoration: none;
     span{
       display: block;
       width: 100%;
       height: 2rem;
-      -webkit-background-size: auto 2rem;
       background-size: auto 2rem;
       background-position: center 0;
       margin-bottom: .5rem;
@@ -67,7 +90,18 @@ nav{
     }
   }
 }
-
+nav>a.home>span{
+  background-image: url("./images/home.png");
+}
+nav>a.current>span{
+  background-image: url("./images/current.png");
+}
+nav>a.cart>span{
+  background-image: url("./images/cart.png");
+}
+nav>a.mine>span{
+  background-image: url("./images/mine.png");
+}
 @-webkit-keyframes navs{
   0%{
     -webkit-background-size: auto .6rem;
@@ -120,18 +154,6 @@ nav{
     background-size: auto 2rem;
   }
 }
-nav>a.home>span{
-  background-image: url("./images/home.png");
-}
-nav>a.current>span{
-  background-image: url("./images/current.png");
-}
-nav>a.cart>span{
-  background-image: url("./images/cart.png");
-}
-nav>a.mine>span{
-  background-image: url("./images/mine.png");
-}
 nav>a.home.router-link-exact-active>span{
   background-image: url("./images/home-active.png");
 }
@@ -145,7 +167,6 @@ nav>a.mine.router-link-exact-active>span{
   background-image: url("./images/mine-active.png");
 }
 nav>a.router-link-exact-active>span{
-  -webkit-animation: navs 1s;
   animation: navs 1s;
 }
 nav>a.cart>var{
@@ -168,5 +189,5 @@ nav>a.cart>var{
 nav>a.cart>var.active{
   .scale(1.5)
 }
-
 </style>
+

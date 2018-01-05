@@ -1,251 +1,386 @@
-// 获取主机地址
-import api from '@/api'
 import http from 'axios'
-
+import api from '@/api'
 export default {
-  // 设置bannar
-  setBannar ({commit}) {
-    let url = api.host + 'bannar'
-    return http.get(url)
-      .then(function (data) {
-        commit('SET_BANNAR', data.data)
-        return {status: true, msg: '获取bannar成功', data: data.data}
-      })
-  },
-  // 获取所有的分类数据并设置给state中的classifys
-  setClassifys ({commit}) {
-    let url = api.host + 'classifys'
-    return http.get(url)
-      .then(function (data) {
-        commit('SET_CLASSIFYS', data.data)
-        return {status: true, msg: '获取分类数据成功', data: data.data}
-      })
-  },
-  // 登录
-  login ({commit}, phone) {
-    // 首先验证是否有这个手机号
-    let url = api.host + 'users?phone=' + phone
-    return http.get(url)
-      .then(function (data) {
-        if (data.data.length > 0) {
-          // 有数据->提取数据并保存到vuex的userInfo下
-          commit('SAVE_USER', data.data[0])
-          // 获取地址信息
-          let getSiteApi = api.host + 'users/' + data.data[0].id + '/sites'
-          http.get(getSiteApi)
-            .then((data) => {
-              commit('SAVE_SITES', data.data)
+  // 对提交的手机号进行处理
+  submit ({commit}, userObj) {
+    // 验证手机号在数据库是否存在
+    return http.get(api.host + '/users?phone=' + userObj.phone)
+      .then(res => {
+        // 判断这个接口是否返回了数据，如果返回就是存在，没返回就是没有这个手机号
+        if (res.data.length > 0) {
+          // 提取该用户的购物车数据
+          http.get(api.host + '/users/' + res.data[0].id + '/carts')
+            .then(res => {
+              commit('SAVE_CARTS', res.data)
             })
-          // 获取购物车数据
-          let getCartsApi = api.host + 'users/' + data.data[0].id + '/carts'
-          http.get(getCartsApi)
-            .then(data => {
-              // 保存购物车数据到store中
-              commit('SAVE_CARTS', data.data)
+          // 提取该用户的地址列表
+          http.get(api.host + '/users/' + res.data[0].id + '/sites')
+            .then(res => {
+              commit('SAVE_SITES', res.data)
             })
-          // 返回登陆成功
-          return {status: true, msg: '登陆成功'}
+          // 提取该用户的收藏列表
+          http.get(api.host + '/users/' + res.data[0].id + '/favors')
+            .then(res => {
+              commit('SAVE_FAVORS', res.data)
+            })
+          // 登陆成功，将用户信息保存到vuex的user状态下
+          commit('LOGIN', res.data[0])
+          return {"msg": "登陆成功"}
         } else {
-          // 没有数据->注册
-          let url = api.host + 'users'
-          // 构造用户对象
-          let newUser = {
-            phone: phone,
-            level: 'V0',
-            current_score: 0,
-            dif_score: '距下一等级还需 30 成长值',
-            selectedSite: {}
-          }
-          // 将新创建的对象添加到数据库中
-          return http.post(url, newUser)
-            .then(function (data) {
-              // 注册成功->保存到vuex的userInfo
-              commit('SAVE_USER', data.data)
-              return {status: true, msg: '注册成功'}
-            })
-        }
-      })
-      .catch(function () {
-        // 如果有错误
-        return {status: false, msg: '登录失败'}
-      })
-  },
-  // 保存地址，并添加到该用户下的地址列表中
-  addSite ({commit}, site) {
-    // 首先将地址保存到数据库中
-    // 拼接添加到地址列表中的路径
-    let addSiteApi = api.host + 'sites'
-    return http.post(addSiteApi, site)
-      .then((data) => {
-        if (data.data.id !== undefined) {
-          site.id = data.data.id
-          commit('ADD_SITE', site)
-          return {status: true, msg: '添加地址成功', id: data.data.id}
-        } else {
-          return {status: false, msg: '添加地址失败'}
-        }
-      })
-  },
-  // 切换地址列表页中所选的地址
-  changeSelectedSite (store, site) {
-    // 切换数据库中的用户所选地址
-    let changeSelectedSiteApi = api.host + 'users/' + store.state.userInfo.id
-    return http.get(changeSelectedSiteApi)
-      .then((data) => {
-        // 判断是不是获取到了数据
-        if (data.data.id > 0) {
-          data.data.selectedSite = site
-          // 更改数据库中的当前用户的SelectedSite值
-          return http.put(changeSelectedSiteApi, data.data)
-        }
-      })
-      .then((data) => {
-        // 更新vuex中的userInfo
-        store.commit('CHANGE_SELECTED_SITE', site)
-      })
-  },
-  // 更新地址
-  changeSite (store, site) {
-    let changeSiteApi = api.host + 'sites/' + site.id
-    return http.put(changeSiteApi, site)
-      .then(data => {
-        if (data.data.id > 0) {
-          store.commit('CHANG_SITES', site)
-          return {status: true, msg: '更改地址成功'}
-        }
-      })
-  },
-  // 向购物车中添加商品
-  addNum (store, product) {
-    // 更改的是在vuex中的商品对象数量
-    product.num++
-    // 首先判断数据库是否已有本商品，如果已经存在就修改数量，如果没有就添加
-    let userId = store.state.userInfo.id
-    /*
-      product_id: 商品id
-      userId: 用户id
-    */
-    let getProductApi = api.host + 'carts?product_id=' + product.product_id + '&userId=' + userId
-    return http.get(getProductApi)
-      .then(data => {
-        let productObj = data.data[0]
-        if (data.data.length > 0) {
-          // 查找到了->更新这个商品对象的数量
-          productObj.num++
-          // 判断是从购物车页面还是其他页面触发的
-          if (product.cartBol) {
-            // 购物车页面
-            store.commit('UP_PRODUCT_NUM', productObj)
-          } else {
-            store.commit('UP_CART_NUM', productObj)
-          }
-          // 更新数据库中的数据
-          let addNumApi = api.host + 'carts/' + productObj.id
-          return http.put(addNumApi, productObj)
-            .then(data => {
-              if (data.data.id !== undefined) {
-                return {status: true, msg: '更新商品数量成功'}
-              }
-            })
-        } else {
-          // 没有，添加-》构造对象
-          product.userId = userId
-          // 控制是否选择该商品，默认为true
-          product.selected = true
-          // 向数据库中添加
-          let addProductApi = api.host + 'carts'
-          return http.post(addProductApi, product)
-            .then(data => {
-              if (data.data.id !== undefined) {
-                // 向store中的carts添加
-                product.id = data.data.id
-                store.commit('ADD_PRODUCT_NUM', product)
-                return {status: true, msg: '添加商品成功'}
-              }
-            })
-        }
-      })
-  },
-  // 向购物车中减少商品
-  downNum (store, product) {
-    product.num--
-    // 判断商品的数量是否已为0，如果为0的话就要从数据库和vuex中移除，如果大于0就修改数量
-    let userId = store.state.userInfo.id
-    // 更改购物车的api
-    let getCartApi = api.host + 'carts?product_id=' + product.product_id + '&userId=' + userId
-    // 从数据库中获取购物车的这个对象
-    return http.get(getCartApi)
-      .then(data => {
-        // 获取从后台返回的购物车对象，购物车对象跟商品对象少了userId属性和id属性
-        let cartObj = data.data[0]
-        let id = cartObj.id
-        cartObj.num--
-        if (cartObj.num === 0) {
-          // 删除
-          let removeCartApi = api.host + 'carts/' + id
-          return http.delete(removeCartApi)
-            .then(data => {
-              // 删除vuex中的购物车数据并返回删除成功
-              store.commit('DOWN_PROJUCT_NUM', product)
-              store.commit('REMOVE_CART_PROJUCT', cartObj)
-              return {status: true, msg: '删除商品成功'}
-            })
-        } else {
-          // 更改购物车中的数量
-          let putCartApi = api.host + 'carts/' + id
-          return http.put(putCartApi, cartObj)
-            .then(data => {
-              if (product.cartBol) {
-                store.commit('DOWN_PROJUCT_NUM', product)
+          // 注册
+          // 追加一个selectSite(所选地址)的属性
+          userObj.selectSite = {}
+          return http.post(api.host + '/users', userObj)
+            .then(res => {
+              if (res.data.id > 0) {
+                // 注册成功将数据保存到vuex的state中，以备后用
+                commit('LOGIN', res.data)
+                return { "msg": "注册成功" }
               } else {
-                // 减少vuex中的购物车数据并返回减少成功
-                store.commit('DOWN_CART_NUM', product)
+                return { "msg": "注册失败" }
               }
-              return {status: true, msg: '减少商品数量成功'}
             })
         }
       })
   },
-  // 购物车数量图标动画
-  changeCartActive ({commit}) {
-    commit('CART_ACTIVE_TRUE')
-    setTimeout(() => {
-      commit('CART_ACTIVE_FALSE')
-    }, 300)
+  /* 
+  * 添加到购物车
+  * @param product 商品对象，必须拥有product_id属性
+  */
+  addCart (store, product) {
+
+    /*if (product.cartBol && product.num > 0) {
+      // 更新数量,数量+1
+      // 克隆一下本地购物车对应的商品
+      let newLocalCartProduct = Object.assign({}, product)
+      newLocalCartProduct.num++
+      return http.patch(api.host + '/carts/' + newLocalCartProduct.id, {
+        num: newLocalCartProduct.num
+      })
+        .then(res => {
+          // 更改成功
+          if (res.data.id > 0) {
+            // 通知本地购物车更新
+            store.commit('UPDATA_NUM', res.data.id)
+            return { "msg": "更新数量成功" }
+          } else {
+            return { "msg": "更新数量失败" }
+          }
+        })
+    }*/
+    // 首先验证该商品在本地购物车中是否已经存在
+    let localCarts = store.state.carts
+    let user = store.state.user
+    // 假设不存在，需要添加
+    let addBol = true
+    for (let i = 0; i < localCarts.length; i++) {
+      // id->商品在购物车表中的id
+      if (localCarts[i].product_id === product.product_id) {
+        // 找到了，存在
+        addBol = false
+        // 更新数量,数量+1
+        // 克隆一下本地购物车对应的商品
+        let newLocalCartProduct = Object.assign({}, localCarts[i])
+        newLocalCartProduct.num++
+        // 更新数据库
+        return http.patch(api.host + '/carts/' + newLocalCartProduct.id, {
+          num: newLocalCartProduct.num
+        })
+          .then(res => {
+            // 更改成功
+            if (res.data.id > 0) {
+              // 通知本地购物车更新
+              store.commit('UPDATA_NUM', res.data.id)
+              return {"msg": "更新数量成功"}
+            } else {
+              return {"msg": "更新数量失败"}
+            }
+          })
+      }
+    }
+    if (addBol) {
+      // 不存在，需要添加,构造需要添加到购物车中的商品对象
+      /* 
+        数据结构
+        {
+          商品在购物中表的 id,
+          商品的id product_id,
+          用户id user_id,
+          商品的数量,
+          商品的图片,
+          商品的名称,
+          商品的价格,
+          是否选择
+        }
+      */
+      let productToCartObj = {
+        product_id: product.product_id,
+        userId: user.id,
+        product_img: product.imgs.min,
+        product_name: product.name,
+        product_price: product.price,
+        checked: true,
+        num: 1
+      }
+      // 添加到数据库中的购物车
+      return http.post(api.host + '/carts', productToCartObj)
+        .then(res => {
+          if (res.data.id > 0) {
+            // 添加成功
+            // 添加到本地购物车中
+            store.commit('ADD_CART', res.data)
+            return {"msg": "添加成功"}
+          } else {
+            // 添加失败
+            return {"msg": "添加失败"}
+          }
+        })
+    }
   },
-  // 切换购物车中商品所选对象
-  switchSelect (store, item) {
-    // 获取购物车中的商品
-    let getCartApi = api.host + 'carts/' + item.id
-    item.selected = !item.selected
-    return http.put(getCartApi, item)
-      .then(data => {
-        if (data.data.id !== undefined) {
-          return {status: true, msg: '切换选择成功'}
+  /* 
+  * 从购物车中减少数量
+  * @param product 商品对象，必须拥有product_id属性
+  */
+  subCart (store, product) {
+    let localCarts = store.state.carts
+    // 获取需要更改数量的购物对象
+    let cartObj = {}
+    // 循环遍历提取该商品对应本地购物车中的商品对象
+    for (let i = 0; i < localCarts.length; i++) {
+      if (product.product_id === localCarts[i].product_id) {
+        cartObj = localCarts[i]
+      }
+    }
+    if (cartObj.num > 1) {
+      // 更改-》减少
+      // 发请求更新num数值
+      return http.patch(api.host + '/carts/' + cartObj.id, {
+        num: cartObj.num
+      })
+        .then(res => {
+          if (res.data.id > 0) {
+            // 更新本地购物车
+            store.commit('SUB_CART', res.data.id)
+            return { "msg": "减少数量成功", "del": 0 }
+          } else {
+            return { "msg": "减少数量失败" }
+          }
+        })
+    } else {
+      // 从本地和数据库中删除该商品
+      return http.delete(api.host + '/carts/' + cartObj.id)
+        .then(res => {
+          // 先从本地购物车删除该商品
+          store.commit('DEL_CART', cartObj.id)
+          return { "msg": "删除商品成功" , "del": 1 }
+        })
+    }
+  },
+  // 更改购物车中商品的选中状态
+  changeChecked (store, product) {
+    // 更新数据库中的商品的状态
+    return http.patch(api.host + '/carts/' + product.id, {
+      checked: !product.checked
+    })
+      .then(res => {
+        if (res.data.id > 0) {
+          // 更新本地购物车状态
+          store.commit('CHANGE_CHECKED', product)
+          return {"msg": "切换状态成功"}
+        } else {
+          return {"msg": "切换状态失败"}
         }
       })
   },
-  // 切换全选
-  changeAllSelected (store, bol) {
-    let userId = store.state.userInfo.id
-    // 获取数据库中的该用户购物车中所对应的所有商品
-    let getCartApi = api.host + 'carts?userId=' + userId
-    return http.get(getCartApi)
-      .then(data => {
-        if (data.data.length > 0) {
-          let carts = data.data
-          let i = 0
-          for (i = 0; i < carts.length; i++) {
-            let putSelectedApi = api.host + 'carts/' + carts[i].id
-            // 更改carts的selected 值
-            carts[i].selected = bol
-            http.put(putSelectedApi, carts[i])
-          }
-          if (i === carts.length) {
-            store.commit('CHANGE_ALL_SELECTED', bol)
-            return {status: true, msg: '切换全选成功'}
-          }
+  // 购物车商品勾选状态全部取消
+  checkedAllFalse (store) {
+    let carts = store.state.carts
+    let completeNum = 0
+    function promiseCheckedAllFalse () {
+      return new Promise(function (resolve, reject) {
+        for (let i = 0; i < carts.length; i++) {
+          http.patch(api.host + '/carts/' + carts[i].id, {
+            checked: false
+          })
+            .then(res => {
+              completeNum++
+              // 全部更改完成
+              if (completeNum >= carts.length - 1) {
+                resolve({"msg": "全部取消成功"})
+              }
+            })
         }
+      })
+    }
+    return promiseCheckedAllFalse()
+      .then(res => {
+        // 更新本地购物车
+        store.commit('CHECKED_ALL_FALSE')
+        return res
+      })
+  },
+  // 购物车商品勾选状态全部选中
+  checkedAllTrue (store) {
+    let carts = store.state.carts
+    let completeNum = 0
+    function promiseCheckedAllTrue() {
+      return new Promise(function (resolve, reject) {
+        for (let i = 0; i < carts.length; i++) {
+          http.patch(api.host + '/carts/' + carts[i].id, {
+            checked: true
+          })
+            .then(res => {
+              completeNum++
+              // 全部更改完成
+              if (completeNum >= carts.length - 1) {
+                resolve({ "msg": "全部勾选成功" })
+              }
+            })
+        }
+      })
+    }
+    return promiseCheckedAllTrue()
+      .then(res => {
+        // 更新本地购物车
+        store.commit('CHECKED_ALL_TRUE')
+        return res
+      })
+  },
+  // 保存地址对象
+  saveSite (store, siteObj) {
+    // 先将地址对象存储到数据库，并返回在数据库中的id
+    return http.post(api.host + '/sites', siteObj)
+      .then(res => {
+        // 通过判断返回的结果是否包含id来判断是否存储成功
+        if (res.data.id > 0) {
+          // 更改用户当前所选地址
+          http.patch(api.host + '/users/' + store.state.user.id, {
+            selectSite: res.data
+          })
+            .then(res => {
+              // 更新本地user对象
+              store.commit('UPDATA_USER', res.data)
+            })
+          // 保存到vuex中
+          store.commit('SAVE_SITE', res.data)
+          return {'msg': '添加成功'}
+        } else {
+          return {'msg': '添加失败'}
+        }
+      })
+  },
+  // 更改所选的地址
+  changeSelectedSite (store, siteObj) {
+    
+    // 更改用户当前所选地址
+    return http.patch(api.host + '/users/' + store.state.user.id, {
+      selectSite: siteObj
+    })
+      .then(res => {
+        if (res.data.id > 0){
+          // 更新本地的所选地址
+          // 更新本地user对象
+          store.commit('UPDATA_USER', res.data)
+          return { 'msg': '更新所选地址成功' }
+        } else {
+          return {'msg': '更新所选地址失败'}
+        }
+      })
+  },
+  // 更新地址信息
+  updataSite (store, siteObj) {
+    if (Number(siteObj.id) === Number(store.state.user.selectSite.id)) {
+      // 也需要更新用户所选择的地址信息
+      store.dispatch('changeSelectedSite', siteObj)
+    }
+    return http.put(api.host + '/sites/' + siteObj.id, siteObj)
+      .then(res => {
+        if (res.data.id > 0) {
+          // 更新本地地址信息
+          store.commit('UPDATA_SITE', res.data)
+          return {'msg': '更新地址信息成功'}
+        } else {
+          return {'msg': '更新地址信息失败'}
+        }
+      })
+  },
+  // 添加收藏
+  addFavor (store, product) {
+    /* 
+      {
+        用户id，这个收藏的商品是哪个用户的, user_id
+        商品的id, product_id
+        商品图片，img(小图)
+        商品名称，name
+        商品的单位，unit
+        商品的价格，price
+      }
+    */
+    // 构造收藏对象
+    let favorObj = {
+      user_id: store.state.user.id,
+      product_id: product.id,
+      img: product.imgs.min,
+      name: product.name,
+      unit: product.unit,
+      price: product.price
+    }
+    return http.post(api.host + '/favors', favorObj)
+      .then(res => {
+        if (res.data.id > 0) {
+          // 将数据库返回的带id收藏对象添加到本地收藏列表
+          store.commit('ADD_FAVOR', res.data)
+          return {'msg': '添加收藏成功'}
+        } else {
+          return {'msg': '添加收藏失败'}
+        }
+      })
+  },
+  // 删除收藏对象
+  subFavor (store, productId) {
+    // 通过商品id得出商品对应的收藏id
+    let favors = store.state.favors
+    let favorId = 0
+    // 要删除收藏对象的下标
+    let favorIndex = 0
+    for (let i = 0; i < favors.length; i++) {
+      if (favors[i].product_id === productId) {
+        favorIndex = i
+        favorId = favors[i].id
+        break
+      }
+    }
+    return http.delete(api.host + '/favors/' + favorId)
+      .then(res => {
+        store.commit('SUB_FAVOR', favorIndex)
+        return {'msg': '删除收藏成功'}
+      })
+  },
+  // 删除勾选的商品收藏
+  delFavors(store, favors) {
+    // 因为要执行删除是一个列表，所以使用promise来监听是否完成
+    function promiseDelFavors() {
+      // 删除列表的数量
+      let delNum = 0
+      return new Promise(function (resolve, reject) {
+
+        for (let i = 0; i < favors.length; i++) {
+          http.delete(api.host + '/favors/' + favors[i].id)
+            .then(res => {
+              delNum++
+              if (delNum >= favors.length) {
+                // 全部删除完成
+                resolve({'msg': '删除收藏列表成功'})
+              }
+            })
+        }
+      })
+    }
+    return promiseDelFavors()
+      .then(res => {
+        // 删除本地的收藏列表
+        store.commit('DEL_FAVORS', favors)
+        return res
       })
   }
 }

@@ -1,24 +1,25 @@
 export default {
-  // bannar
-  bannar: {},
-  // 存储所有分类数据
-  classifys: [],
-  // 控制tabBar显示隐藏的
-  tabBarShow: true,
+  computedCategories: [{ cids: [], products: []}],
   // 用户信息
-  userInfo: {},
-  // 地址列表
-  sites: [],
-  // 所选城市
-  selectCity: '',
-  // 所选的地区
-  selectSite: '',
-  // 所选地区的坐标
-  location: {},
-  // 购物车数据
+  user: {
+    selectSite: {}
+  },
+  // 本地购物车
   carts: [],
-  // 控制购物车数量图标的动画
-  cartActive: false,
-  // 保存tabBar中cart标签的位置
-  cartPos: {}
+  // 控制tabBar显示隐藏
+  tabBarShow: true,
+  // 存储该用户的地址信息
+  sites: [],
+  // 所选的城市
+  selectedCity: '',
+  // 所选的地址
+  selectedSite: '',
+  // 所选的x,
+  selectedX: 0,
+  // 所选的y,
+  selectedY: 0,
+  // 购物车按钮的位置
+  cartPos: {},
+  // 本地的收藏列表
+  favors: []
 }

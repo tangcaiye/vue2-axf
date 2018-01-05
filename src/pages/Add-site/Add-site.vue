@@ -1,10 +1,10 @@
 <template>
   <div class="add-site">
-    <header-gray headerTitle="添加地址" back="true"></header-gray>
-    <span class="extend-click header-icon save" @click="save()">保存</span>
+    <HeaderGray headerTitle="添加地址" back="true"></HeaderGray>
+    <span class="extend-click header-icon save" @click="saveSite">保存</span>
     <div class="main">
       <div class="edit-form whitebg">
-        <table class="addr-edit" width="100%">
+        <table width="100%" class="addr-edit">
           <tbody>
             <tr class="spline-top spline-bottom">
               <th>联系人</th>
@@ -15,8 +15,8 @@
             <tr class="spline-top">
               <th>&nbsp;</th>
               <td>
-                <span @click="sex=0" class="theme-radio" :class="{checked: sex==0}">先生</span>
-                <span @click="sex=1" class="theme-radio" :class="{checked: sex==1}">女士</span>
+                <span @click="sex=0" class="theme-radio" :class="{checked: sex===0}">先生</span>
+                <span @click="sex=1" class="theme-radio" :class="{checked: sex===1}">女士</span>
               </td>
             </tr>
             <tr class="spline-top">
@@ -28,16 +28,17 @@
             <tr class="spline-top">
               <th>所在城市</th>
               <td class="more">
-                <select class="select-city" @change="bindChange()" v-model="city">
+                <select class="select-city" :value="selectedCity" @change="bindChange">
                   <option value="">请选择城市</option>
-                  <option v-for="(item,index) in citys" :value="item">{{item}}</option>
+                  <option v-for="(item,index) in citys" :key="index" :value="item.city">{{item.city}}</option>
                 </select>
               </td>
             </tr>
+            <!-- 点击跳转到地图页面 -->
             <tr class="spline-top">
               <th>所在地区</th>
               <td class="more">
-                <input type="text" placeholder="请选择您的住宅小区、大厦或学校" @click.prevent="selectSite()" :value="site">
+                <input type="text" placeholder="请选择您的住宅小区、大厦或学校" @click.prevent="selectSite" :value="selectedSite">
               </td>
             </tr>
             <tr class="spline-top">
@@ -52,100 +53,112 @@
     </div>
   </div>
 </template>
-<script type="text/javascript">
-import HeaderGray from 'components/Header-gray/Header-gray'
+<script>
 import api from '@/api'
-// 弹出框
-import { MessageBox } from 'mint-ui'
+import HeaderGray from '@/components/Header-gray/Header-gray'
 export default {
+  components: {
+    HeaderGray
+  },
+  // 因为城市列表都是一样的，所以只需要提取一次,所以使用created
   created () {
-    // 获取城市列表数据
-    let sendUrl = api.host + 'citys'
-    this.$http.get(sendUrl)
-      .then(data => {
-        this.citys = data.data
+    // 读取城市列表
+    this.$http.get(api.host + '/citys')
+      .then(res => {
+        this.citys = res.data
       })
-    this.city = this.$store.state.selectCity
-    this.site = this.$store.state.selectSite
   },
   data () {
     return {
-      // 城市列表
-      citys: [],
-      // 所选城市,默认为0
-      city: '',
-      // 所选地址
-      site: '',
-      // 所选性别
-      sex: 0,
-      // 联系人
       linkman: '',
-      // 手机号码
+      sex: '',
       phone: '',
+      // 当前所选的城市
+      // city: '',
+      citys: [],
+      // 所在的地区
+      // site: '',
       // 详细地址
       detailSite: ''
     }
   },
-  components: {
-    HeaderGray
-  },
   methods: {
-    // 选择地区
+    saveSite () {
+      // 判断是否有用户id(是否登陆)
+      if (this.user.id) {
+        if (this.linkman !== '' && this.detailSite !== '' && this.sex !== '' && this.selectedCity !== '' && this.selectedSite !== '') {
+          // 创建地址对象
+          let siteObj = {
+            linkman: this.linkman,
+            // 性别：0先生，1女士
+            sex: this.sex,
+            phone: this.phone,
+            city: this.selectedCity,
+            site: this.selectedSite,
+            detailSite: this.detailSite,
+            userId: this.user.id,
+            x: this.selectedX,
+            y: this.selectedY
+          }
+          // 将地址对象添加到数据库和vuex中
+          this.$store.dispatch('saveSite', siteObj)
+            .then(res => {
+              return this.$msg('提示', res.msg)
+            })
+            .then(action => {
+              // 跳转到地址列表页(/site)
+              this.$router.push('/site')
+            })
+        } else {
+          this.$msg('提示', '内容不能为空')
+        }
+      } else {
+        // 没有用户id
+        this.$msg('提示', '未登录，请登录')
+          .then(action => {
+            this.$router.push('/login')
+          })
+      }
+    },
     selectSite () {
+      // 判断是否选择了城市
       if (this.city !== '') {
+        // 跳转到地图页(选择位置)(百度地图页)
         this.$router.push('/select-site')
       } else {
-        MessageBox({
-          title: '提示',
-          message: '请先选择城市'
-        })
+        this.$msg('提示', '请先选择城市')
       }
     },
-    // 切换地区
     bindChange () {
-      // console.log(event.target.value)
-      this.$store.commit('CHANGE_CITY', event.target.value)
-    },
-    // 保存地址
-    save () {
-      // 构造地址对象
-      if (this.linkman && this.phone && this.city && this.site && this.detailSite) {
-        let siteObj = {
-          linkman: this.linkman,
-          sex: this.sex,
-          phone: this.phone,
-          city: this.city,
-          site: this.site,
-          detailSite: this.detailSite,
-          // 用户id
-          userId: this.$store.state.userInfo.id,
-          // 当前位置的坐标
-          location: this.$store.state.location
-        }
-        // 添加地址
-        this.$store.dispatch('addSite', siteObj)
-          .then((data) => {
-            MessageBox({
-              title: '提示',
-              message: data.msg
-            })
-            // 点击消息之后的提示
-            .then(() => {
-              if (data.status) {
-                // 更改用户所选的地址
-                siteObj.id = data.id
-                this.$store.dispatch('changeSelectedSite', siteObj)
-                this.$router.push('/site')
-              }
-            })
-          })
-      } else {
-        MessageBox({
-          title: '提示',
-          message: '内容不能为空'
-        })
-      }
+      // 更新所选城市
+      this.$store.commit('CHANGE_SELECTED_CITY', event.target.value)
+      // 重置所选地址
+      this.$store.commit('SAVE_SELECTED_SITE', '')
     }
+  },
+  computed: {
+    selectedCity () {
+      return this.$store.state.selectedCity
+    },
+    selectedSite () {
+      return this.$store.state.selectedSite
+    },
+    user () {
+      return this.$store.state.user
+    },
+    selectedX () {
+      return this.$store.state.selectedX
+    },
+    selectedY () {
+      return this.$store.state.selectedY
+    }
+  },
+  // 组件停用时触发
+  deactivated () {
+    this.linkman = ''
+    this.phone = ''
+    this.detailSite = ''
+    this.sex = ''
   }
 }
 </script>
@@ -183,3 +196,5 @@ export default {
   }
 }
 </style>
+
+

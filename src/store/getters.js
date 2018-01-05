@@ -1,33 +1,22 @@
 export default {
-  // 获取购物车中的商品总数
-  cartsLen (state) {
-    let result = 0
-    for (let i = 0; i < state.carts.length; i++) {
-      if (state.carts[i].selected) {
-        result += state.carts[i].num
-      }
-    }
-    return result
-  },
-  // 获取购物车中的商品总价
   total (state) {
     let result = 0
-    for (let i = 0; i < state.carts.length; i++) {
-      if (state.carts[i].selected) {
-        result += (state.carts[i].num * state.carts[i].price)
+    let carts = state.carts
+    for (let i = 0; i < carts.length; i++) {
+      if (carts[i].checked) {
+        result += (carts[i].num * carts[i].product_price)
       }
     }
     return result
   },
-  // 是否全选
-  isAllSelected (state) {
-    let isAllSelected = true
-    for (let i = 0; i < state.carts.length; i++) {
-      if (!state.carts[i].selected) {
-        isAllSelected = false
-        break
+  cartsLen (state) {
+    let result = 0
+    let carts = state.carts
+    for (let i = 0; i < carts.length; i++) {
+      if (carts[i].checked) {
+        result += carts[i].num
       }
     }
-    return isAllSelected
+    return result
   }
 }

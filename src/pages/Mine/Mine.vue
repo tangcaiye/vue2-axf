@@ -7,9 +7,9 @@
       </div>
     </div>
     <div class="favorite theme-bg">
-      <div class="goodsFavorite item">
+      <router-link to="/favor" class="goodsFavorite item" tag="div">
         <span class="inner">商品收藏</span>
-      </div>
+      </router-link>
       <div class="split"></div>
       <div class="shopFavorite item">
         <span class="inner">商品收藏</span>
@@ -49,21 +49,9 @@
     </div>
   </div>
 </template>
-<script type="text/javascript">
-export default{
-  created () {
-    // 通过获取用户信息中是否有数据来判断用户是否登录
-    let userInfo = this.$store.state.userInfo
-    if (userInfo.phone === undefined) {
-      // 跳转到Login页
-      this.$router.push('/login')
-    }
-  }
-}
-</script>
 <style lang="less" scoped>
-@import url("../../common/styles/variable.less");
-@import url("../../common/styles/mixin.less");
+@import url("../../styles/var.less");
+@import url("../../styles/mixin.less");
 
 .mine{
   font-size: @font-size-medium;

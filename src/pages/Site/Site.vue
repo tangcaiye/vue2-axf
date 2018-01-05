@@ -1,70 +1,61 @@
 <template>
   <div class="site">
-    <header-gray header-title="选择地址" back="true"></header-gray>
+    <HeaderGray header-title="选择地址" back="true" />
     <div class="main">
       <!-- 没有地址的时候 -->
-      <div class="empty-notice" v-if="!(sites.length>0)">
+      <div class="empty-notice" v-if="!sites.length>0">
         <div class="notice-icon"></div>
         您还没地址哦~
       </div>
       <!-- 显示地址列表 -->
       <ul class="addr-list block" v-if="sites.length>0">
-        <li class="addr-item spline-bottom" v-for="(item,index) in sites" @click="changeSelectedSite(item)">
-          <div class="addr-desc" :class="{selected: item.id==selectedSite.id}">
+        <li class="addr-item spline-bottom"  v-for="item in sites" :key="item.id" @click="changeSelectedSite(item)">
+          <div class="addr-desc" :class="{'selected': user.selectSite.id == item.id}">
             <p class="no-wrap">{{item.linkman}}&nbsp;&nbsp;&nbsp;{{item.phone}}</p>
-            <p class="no-wrap theme-font-gray">{{item.city}}{{item.site}}</p>
+            <p class="no-wrap theme-font-gray">{{item.city}}&nbsp;{{item.site}}</p>
           </div>
-          <div class="addr-edit" @click.stop="editSite(item)"></div>
+          <div class="addr-edit" @click.stop="goEditSite('/edit-site/' + item.id)"></div>
         </li>
       </ul>
+      <!-- 新增地址 -->
       <div class="pub-footer spline-bottom spline-top">
-        <div class="theme-btn-big yellowbg" @click="addSite()">新增地址</div>
+        <div class="theme-btn-big yellowbg" @click="addSite">新增地址</div>
       </div>
     </div>
   </div>
 </template>
-<script type="text/javascript">
-import HeaderGray from 'components/Header-gray/Header-gray'
+<script>
+import HeaderGray from '@/components/Header-gray/Header-gray'
 export default {
-  data () {
-    return {}
-  },
-  created () {
-    // 判断用户是否登录
-    if (this.$store.state.userInfo.id === undefined) {
-      this.$router.push('/login')
-    }
-  },
   components: {
     HeaderGray
   },
-  methods: {
-    // 跳转到添加地址页面
-    addSite () {
-      this.$router.push('/addsite')
-    },
-    // 切换所选择的地址
-    changeSelectedSite (item) {
-      this.$store.dispatch('changeSelectedSite', item)
-    },
-    // 编辑地址信息
-    editSite (item) {
-      this.$router.push('/edit-site/' + item.id)
-    }
-  },
   computed: {
-    // 获取该用户的所有的地址列表
     sites () {
       return this.$store.state.sites
     },
-    // 获取所选的地址
-    selectedSite () {
-      let selectedSite = this.$store.state.userInfo.selectedSite
-      if (selectedSite === undefined) {
-        return {}
-      } else {
-        return selectedSite
-      }
+    user () {
+      return this.$store.state.user
+    }
+  },
+  methods: {
+    addSite () {
+      this.$router.push('/add-site')
+    },
+    // 更改所选的地址
+    changeSelectedSite (siteObj) {
+      this.$store.dispatch('changeSelectedSite', siteObj)
+    },
+    goEditSite (url) {
+      this.$router.push(url)
+    }
+  },
+  created () {
+    if (!(this.user.id > 0)) {
+      this.$msg('提示', '未登录，请登录')
+        .then(action => {
+          this.$router.push('/login')
+        })
     }
   }
 }
@@ -124,9 +115,5 @@ export default {
   border-left: 1px solid #e0e0e0;
 }
 </style>
-
-
-
-
 
 

@@ -1,48 +1,58 @@
 <template>
   <div class="home">
-    <header-yellow></header-yellow>
+    <HeaderYellow/>
     <div class="main">
+      <!-- 分类列表 -->
       <div class="category">
         <ul class="categories">
-          <li v-for="(item,index) in classifys" @click="changeClassifys(item.classify_id)"><span :class="{'active': activeClassifysId === item.classify_id}">{{item.classify_title}}</span></li>
+          <li v-for="(item, index) in computedCategories" :key="item.id" @click="changeCategories(index)">
+            <span :class="{'active': activeCategory === index}">{{item.name}}</span>
+          </li>
         </ul>
       </div>
-      <div class="productList" @click="hideProductList()">
-        <div class="product-filter" :class="{'active': ranking||allCategories}">
+      <div class="productList" @click="hideProductList">
+        <div class="product-filter" :class="{'active': allCategories || ranking}">
+          <!-- 全部分类和综合排序按钮 -->
           <div class="filter-titles">
-            <div :class="{'active': allCategories}" @click.stop="changeAllCategories()"><span>全部分类</span><var>&nbsp;</var></div>
-            <div :class="{'active': ranking}" @click.stop="changeRanking()"><span>综合排序</span><var>&nbsp;</var></div>
+            <div @click.stop="changeAllCategories" :class="{'active': allCategories}">
+              <span>{{activeCid}}</span><var>&nbsp;</var>
+            </div>
+            <div @click.stop="changeRanking" :class="{'active': ranking}">
+              <span>{{activeRanking}}</span><var>&nbsp;</var>
+            </div>
           </div>
-          <!-- 全部分类 -->
+          <!-- 显示隐藏的全部分类 -->
           <div class="filter-items" v-show="allCategories">
             <ul>
-              <li :class="{'active': allCategoriesIndex === 'all'}" @click="changeCids('all')">全部分类</li>
-              <li v-for="(item, index) in activeClassifysProduct.cids" :class="{'active': allCategoriesIndex === index}" @click="changeCids(index)">{{item.name}}</li>
+              <li :class="{'active': activeCid === '全部分类'}" @click="changeCid('全部分类', 'all')">全部分类</li>
+              <li v-for="(item, index) in computedCategories[activeCategory].cids" :key="item.cid_id" :class="{'active': activeCid === item.name}" @click="changeCid(item.name, index)">{{item.name}}</li>
             </ul>
           </div>
-          <!-- 综合排序 -->
+          <!-- 显示隐藏的综合排序 -->
           <div class="filter-items" v-show="ranking">
             <ul>
-              <li v-for="(item, index) in rankingList" :class="{'active': activeRankingIndex === index}" @click="changeRankingIndex(index)">{{item}}</li>
+              <li v-for="(item, index) in rankingList" :key="item" :class="{'active': activeRanking===item}" @click="changeActiveRanking(item)">{{item}}</li>
             </ul>
           </div>
         </div>
         <ul class="productList-wrap">
-          <router-link tag="li" v-for="(item,index) in filterClassifysProduct" :key="item.product_id" :to="'/product-item/'+item.product_id">
+          <router-link tag="li" :to="'/product-item/' + item.id" v-for="(item, index) in sortProducts" :key="item.id">
             <dl>
               <dt>
-                <img v-lazy="item.imgs.small" :ref="'item'+index">
+                <img v-lazy="item.imgs.min" :ref="'pro' + item.id">
               </dt>
-              <dd class="nowrap product-item-title">{{item.title}}</dd>
+              <dd class="nowrap product-item-title">
+                {{item.name}}
+              </dd>
               <dd class="product-specifics-wrap">
                 <div class="product-specifics">
                   <span>{{item.unit}}ml</span>
                   <var>￥{{item.price}}</var>
                 </div>
                 <div class="product-operates">
-                  <span class="inner" @click.stop="subNum(item, index)">-</span>
+                  <span class="inner" @click.stop="subCart(item)">-</span>
                   <span class="product-operates-item">{{item.num}}</span>
-                  <span class="inner" @click.stop="addNum(item, index)">+</span>
+                  <span class="inner" @click.stop="addCart(item)">+</span>
                 </div>
               </dd>
             </dl>
@@ -52,192 +62,166 @@
     </div>
   </div>
 </template>
-<script type="text/javascript">
-import HeaderYellow from 'components/Header-yellow/Header-yellow'
+<script>
+import HeaderYellow from '@/components/Header-yellow/Header-yellow'
 export default {
-  created () {
-    // 分类数据
-  },
   data () {
     return {
-      // 激活的分类id
-      activeClassifysId: 1,
-      // 控制全部分类显示隐藏
+      // 激活的大分类, 保存的是分类的下标
+      activeCategory: 0,
+      // 激活的子分类, 保存的是子分类的名称
+      activeCid: '全部分类',
+      // 激活的子分类的下标,默认为all为全部分类
+      activeCidIndex: 'all',
+      // 控制全部分类列表显示隐藏的
       allCategories: false,
-      // 激活的分类下标
-      allCategoriesIndex: 'all',
-      // 控制综合排序显示隐藏
-      ranking: false,
-      // 默认的排序方式
+      // 综合排序的方式
       rankingList: ['综合排序', '价格最低', '价格最高'],
       // 激活的排序方式
-      activeRankingIndex: 0
+      activeRanking: '综合排序',
+      // 控制排序方式列表的显示隐藏
+      ranking: false
     }
   },
   components: {
     HeaderYellow
   },
   computed: {
-    // 获取用户信息
-    userInfo () {
-      return this.$store.state.userInfo
+    computedCategories () {
+      return this.$store.state.computedCategories
     },
-    // 获取激活的分类数据
-    activeClassifysProduct () {
-      // 数据是异步获取的，刚开始可能没有数据，所以判断一下，防止错误
-      if (this.classifys.length > 0) {
-        return this.classifys.filter(item => Number(item.classify_id) === this.activeClassifysId)[0]
+    // 激活的分类商品数据
+    activeCategoryProducts () {
+      return this.computedCategories[this.activeCategory].products
+    },
+    // 根据激活的子分类下标返回商品数据
+    activeCidProducts () {
+      if (this.activeCidIndex === 'all') {
+        return this.activeCategoryProducts
       } else {
-        return {}
+        let index = this.activeCidIndex
+        return this.activeCategoryProducts.filter(item => item.cidsIndex === Number(index))
       }
     },
-    // 通过allCategoriesIndex来筛选数据和activeRankingIndex来排序
-    filterClassifysProduct () {
-      // 升序和降序
-      function sortNumberUp (a, b) {
-        return a.price - b.price
-      }
-      function sortNumberDown (a, b) {
-        return b.price - a.price
-      }
-
-      // 如果还没获取到商品的数据就返回一个空对象
-      if (this.activeClassifysProduct.products === undefined) {
-        return {}
-      }
-      // 保存筛选的结果
-      var result = []
-      // 1.首先过滤
-      // 如果allCategoriesIndex不为all才进行过滤
-      if (this.allCategoriesIndex === 'all') {
-        result = this.activeClassifysProduct.products
+    // 对显示的商品列表进行排序
+    sortProducts () {
+      if (this.activeRanking === '综合排序') {
+        return this.activeCidProducts
+      } else if (this.activeRanking === '价格最低') {
+        return this.activeCidProducts.sort((a, b) => a.price - b.price)
       } else {
-        // 提取子分类的关键字的下标值
-        let keyIndex = this.allCategoriesIndex
-
-        var products = this.activeClassifysProduct.products
-        for (var i = 0; i < products.length; i++) {
-          // 比较商品的子分类index跟关键字index是否一样
-          if (products[i].cids === keyIndex) {
-            result.push(products[i])
-          }
-        }
-      }
-      // 2.排序
-      // 获取排序关键字,根据不同关键字进行对应的排序
-      switch (this.activeRankingIndex) {
-        case 0:
-          // 不排序
-          return result
-        case 1:
-          // 升序
-          return result.sort(sortNumberUp)
-        case 2:
-          // 降序
-          return result.sort(sortNumberDown)
+        return this.activeCidProducts.sort((a, b) => b.price - a.price)
       }
     },
-    // 从vuex中提取classifys
-    classifys () {
-      return this.$store.state.classifys
+    // 用户信息对象
+    user () {
+      return this.$store.state.user
+    },
+    cartPos () {
+      return this.$store.state.cartPos
     }
   },
   methods: {
-    // 切换全部分类
-    changeAllCategories () {
-      // 取反
-      this.allCategories = !this.allCategories
-      // 将综合排序切换为隐藏
-      this.ranking = false
-    },
-    // 切换综合排序列表的显示隐藏
-    changeRanking () {
-      this.ranking = !this.ranking
-      // 将全部分类隐藏
-      this.allCategories = false
-    },
-    // 切换全部分类项的下标
-    changeCids (index) {
-      this.allCategoriesIndex = index
-    },
-    // 切换排序的方式下标
-    changeRankingIndex (index) {
-      this.activeRankingIndex = index
-    },
-    // 隐藏
-    hideProductList () {
-      // 隐藏全部分类和综合排序，同时给全部分类和综合排序按钮加了阻止冒泡的修饰符
-      this.ranking = false
-      this.allCategories = false
-    },
-    // 切换分类
-    changeClassifys (id) {
-      // 设置id
-      this.activeClassifysId = id
-      // 重置
-      this.allCategories = false
-      this.ranking = false
-      this.allCategoriesIndex = 'all'
-      this.activeRankingIndex = 0
-    },
-    // 减少数量
-    subNum (item, index) {
-      if (this.userInfo.id !== undefined) {
-        if (item.num > 0) {
-          this.$store.dispatch('downNum', item)
-            .then((data) => {
-              if (data.status) {
-                this.$store.dispatch('changeCartActive')
-              }
+    // 从购物车中减少该商品的数量
+    subCart (product) {
+      if (this.user.id) {
+        if (product.num > 0) {
+          // 追加product_id属性
+          product.product_id = product.id
+          this.$store.dispatch('subCart', product)
+            .then(res => {
+              this.$msg('提示', res.msg)
+              // 让当前商品的数量--
+              product.num--
             })
         }
       } else {
-        this.$msgbox('提示', '未登录')
-          .then(() => {
+        // 没登录
+        this.$msg('提示', '未登录,请登录')
+          .then(action => {
             this.$router.push('/login')
           })
       }
     },
-    // 增加数量
-    addNum (item, index) {
-      if (this.userInfo.id !== undefined) {
-        // 添加到购物车的动画效果
-        let pos = this.$refs['item' + index][0].getBoundingClientRect()
-        let cartPos = this.$store.state.cartPos
-        let obj = {
-          src: item.imgs.small,
-          width: pos.width,
-          height: pos.height,
-          start: {
-            left: pos.left,
-            top: pos.top
-          },
-          end: {
-            left: cartPos.left,
-            top: cartPos.top
-          }
-        }
-        this.$addCart(obj)
-
-        this.$store.dispatch('addNum', item)
-          .then((data) => {
-            if (data.status) {
-              this.$store.dispatch('changeCartActive')
+    // 添加到购物车
+    addCart (product) {
+      // 首先验证是否登陆
+      if (this.user.id) {
+        // 已经登陆或者注册过了
+        // 将商品添加到购物车
+        // 追加product_id属性
+        product.product_id = product.id
+        this.$store.dispatch('addCart', product)
+          .then(res => { 
+            // this.$msg('提示', res.msg)
+            // 走动画
+            // 获取点击对象所对应图片的位置信息
+            let pos = this.$refs['pro' + product.id][0].getBoundingClientRect()
+            // 获取购物车按钮的位置信息
+            let cartPos = this.$store.state.cartPos
+            let obj = {
+              src: product.imgs.min,
+              width: pos.width,
+              height: pos.height,
+              start: {
+                left: pos.left,
+                top: pos.top
+              },
+              end: {
+                left: cartPos.left,
+                top: cartPos.top
+              }
             }
+            this.$addCart(obj)
+            // 更新或者添加成功了之后让num++
+            product.num++
           })
       } else {
-        this.$msgbox('提示', '未登录')
-          .then(() => {
+        // 没登录
+        this.$msg('提示', '未登录,请登录')
+          .then(action => {
             this.$router.push('/login')
           })
       }
+    },
+    // 更改激活的分类
+    changeCategories (index) {
+      this.activeCategory = index
+      // 激活的子分类初始化
+      this.activeCid = '全部分类'
+      // 激活的排序方式初始化
+      this.activeRanking = '综合排序'
+    },
+    // 切换全部分类列表的显示隐藏
+    changeAllCategories () {
+      this.allCategories = !this.allCategories
+      this.ranking = false
+    },
+    // 切换激活的子分类
+    changeCid (name, index) {
+      this.activeCid = name
+      this.activeCidIndex = index
+    },
+    // 切换激活的排序方式
+    changeActiveRanking (item) {
+      this.activeRanking = item
+    },
+    // 切换排序的显示隐藏
+    changeRanking () {
+      this.ranking = !this.ranking
+      this.allCategories = false
+    },
+    // 让蒙版隐藏
+    hideProductList () {
+      this.ranking = false
+      this.allCategories = false
     }
   }
 }
 </script>
 <style lang="less" scoped>
 .category{
-  overflow: hidden;
+  overflow: scroll;
   position: relative;
   height: 100%;
 }
@@ -256,9 +240,11 @@ export default {
   display: block;
   height: 3.4rem;
   line-height: 3.4rem;
+  padding-left: 0.6rem;
 }
 .categories>li>span.active{
   border-left: 0.6rem solid #f0d001;
+  padding-left: 0;
 }
 .productList{
   /*float: right;*/
@@ -420,3 +406,5 @@ export default {
   margin: 0 0.5rem;
 }
 </style>
+
+

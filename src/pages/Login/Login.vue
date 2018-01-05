@@ -1,6 +1,6 @@
 <template>
   <div class="login">
-    <header-gray header-title="验证手机" back="true"></header-gray>
+    <HeaderGray headerTitle="验证手机" back="true" />
     <div class="main">
       <div class="login">
         <div class="pic theme-bg" :class="{'pic-hide': picHide}">
@@ -8,74 +8,57 @@
         </div>
         <div class="inputs">
           <div class="phone-padding spline-bottom">
-            <input class="phone" type="tel" placeholder="手机号码" v-model="phone" @focus="picHidefocus()" @blur="picHideBlue()">
+            <input class="phone" v-model="phone" type="tel" placeholder="手机号码" @focus="picHidefocus" @blur="picHideBlue">
           </div>
         </div>
-        <div class="theme-bg login-submit" @click="login()">确定</div>
+        <div class="theme-bg login-submit" @click="login">确定</div>
       </div>
     </div>
   </div>
 </template>
-<script type="text/javascript">
-import HeaderGray from 'components/Header-gray/Header-gray'
-// 引入mint-ui的MessageBox消息提示框
-import { MessageBox } from 'mint-ui'
-var timer = null
+<script>
+import HeaderGray from '@/components/Header-gray/Header-gray'
 export default {
   data () {
     return {
       // 控制显示隐藏
       picHide: false,
-      // 手机号的值
       phone: ''
-    }
-  },
-  methods: {
-    // 当input聚焦的时候
-    picHidefocus () {
-      clearTimeout(timer)
-      this.picHide = true
-    },
-    // 失焦的时候触发
-    picHideBlue () {
-      timer = setTimeout(() => {
-        this.picHide = false
-      }, 2000)
-    },
-    /*
-      登录,如果数据库中有这个手机号那么就读取数据保存到vuex中，
-      如果没有这个手机号就自动注册
-    */
-    login () {
-      let _this = this
-      // 获取手机号的值,并进行校验
-      let reg = /^1[34578]\d{9}$/
-      if (!reg.test(this.phone)) {
-        MessageBox({
-          title: '错误提示',
-          message: '手机号格式填写错误，必须是11位的纯数字'
-          // showCancelButton: true
-        })
-      } else {
-        this.$store.dispatch('login', this.phone)
-          .then(function (data) {
-            MessageBox({
-              title: '提示',
-              message: data.msg
-            })
-            .then(function () {
-              // 在用户点击确定后判断状态来决定是否要回到首页
-              if (data.status) {
-                // 成功->跳转到上一个页面
-                _this.$router.go(-1)
-              }
-            })
-          })
-      }
     }
   },
   components: {
     HeaderGray
+  },
+  methods: {
+    picHidefocus () {
+      this.picHide = true
+    },
+    picHideBlue () {
+      setTimeout(() => {
+        this.picHide = false
+      }, 1000)
+    },
+    // 提交按钮
+    login () {
+      let phone = this.phone
+      let reg = /^1[34578]\d{9}$/g
+      if (reg.test(phone)) {
+        // 验证通过
+        let userObj = {
+          phone: phone
+        }
+        let that = this
+        async function submitData () {
+          let res = await that.$store.dispatch('submit', userObj)
+          let action = await that.$msg('提示', res.msg)
+          // 登陆成功获取注册成功都会跳转页面到首页
+          that.$router.push('/')
+        }
+        submitData()
+      } else {
+        this.$msg('提示', '手机号输入错误')
+      }
+    }
   }
 }
 </script>
@@ -130,3 +113,4 @@ export default {
   height: 0px !important;
 }
 </style>
+

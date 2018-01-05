@@ -1,31 +1,35 @@
 <template>
   <div class="home">
-    <header-yellow></header-yellow>
-    <!-- 主体部分 -->
+    <HeaderYellow/>
     <div class="main">
+      <!-- bannar轮播图 -->
       <div class="bannar">
-        <router-link to="/">
-          <img v-lazy="bannar.img">
-        </router-link>
+        <mt-swipe :auto="4000">
+          <mt-swipe-item v-for="(item, index) in bannar" :key="item.id">
+            <img v-lazy="item.bannar_img">
+          </mt-swipe-item>
+        </mt-swipe>
       </div>
+      <!-- 首页商品列表 -->
       <ul class="acts-category">
-        <li class="acts-category-item" v-for="(item,index) in classifys" :key="item.classify_id">
+        <li class="acts-category-item" v-for="(item, index) in computedCategories" :key="item.id">
+          <!-- 列表的标题 -->
           <div class="acts-category-title">
-            <span>{{item.classify_title}}</span>
+            <span :style="{color: item.color, 'border-color': item.color}">{{item.name}}</span>
             <a href="#/category">更多&gt;</a>
           </div>
-          <img class="category-item-banner" :src="item.imgs.small">
+          <img class="category-item-banner" :src="item.category_img">
           <ul class="acts-category-item-goodsList">
-            <!-- v-if限制显示的数量 -->
-            <router-link tag="li" v-for="(pro,ind) in item.products" :key="pro.product_id" :to="'/product-item/'+pro.product_id" v-if="ind < 3">
-              <img v-lazy="pro.imgs.small" :ref="'item'+ind+index">
-              <p class="category-name">{{pro.title}}</p>
+            <router-link tag="li" v-for="(product, ind) in item.products" :key="product.id" v-if="ind < 3" :to="'/product-item/' + product.id">
+              <img v-lazy="product.imgs.min" :ref="'home' + product.id">
+              <p class="category-name">{{product.name}}</p>
               <div class="product-specifics">
                 <div class="product-specifics-left">
-                  <p>{{pro.unit}}ml</p>
-                  <p>￥{{pro.price}}</p>
+                  <p>{{product.unit}}ml</p>
+                  <p>￥{{product.price}}</p>
                 </div>
-                <div class="product-specifics-right" @click="addNum(pro, ind, index)">+</div>
+                <!-- 添加到购物车按钮 -->
+                <div class="product-specifics-right" @click.stop="addCart(product)">+</div>
               </div>
             </router-link>
           </ul>
@@ -34,59 +38,71 @@
     </div>
   </div>
 </template>
-<script type="text/javascript">
-import HeaderYellow from 'components/Header-yellow/Header-yellow'
+<script>
+import HeaderYellow from '@/components/Header-yellow/Header-yellow'
+import api from '@/api'
 export default {
-  created () {},
   data () {
-    return {}
+    return {
+      bannar: [],
+    }
+  },
+  created () {
+    // 获取bannar
+    this.$http.get(api.host + '/bannar')
+      .then(res => {
+        this.bannar = res.data
+      })
   },
   components: {
     HeaderYellow
   },
   computed: {
-    userInfo () {
-      return this.$store.state.userInfo
+    computedCategories () {
+      return this.$store.state.computedCategories
     },
-    // 提取bannar
-    bannar () {
-      return this.$store.state.bannar
-    },
-    // 提取全部分类
-    classifys () {
-      return this.$store.state.classifys
+    // 用户信息对象
+    user () {
+      return this.$store.state.user
     }
   },
   methods: {
-    addNum (item, ind, index) {
-      if (this.userInfo.id !== undefined) {
-        // 添加到购物车的动画效果
-        let pos = this.$refs['item' + ind + index][0].getBoundingClientRect()
-        let cartPos = this.$store.state.cartPos
-        let obj = {
-          src: item.imgs.small,
-          width: pos.width,
-          height: pos.height,
-          start: {
-            left: pos.left,
-            top: pos.top
-          },
-          end: {
-            left: cartPos.left,
-            top: cartPos.top
-          }
-        }
-        this.$addCart(obj)
-
-        this.$store.dispatch('addNum', item)
-          .then((data) => {
-            if (data.status) {
-              this.$store.dispatch('changeCartActive')
+    // 添加到购物车
+    addCart (product) {
+      // 首先验证是否登陆
+      if (this.user.id) {
+        // 已经登陆或者注册过了
+        // 将商品添加到购物车
+        // 追加product_id属性
+        product.product_id = product.id
+        this.$store.dispatch('addCart', product)
+          .then(res => { 
+            // this.$msg('提示', res.msg)
+            // 获取点击对象所对应图片的位置信息
+            let pos = this.$refs['home' + product.id][0].getBoundingClientRect()
+            // 获取购物车按钮的位置信息
+            let cartPos = this.$store.state.cartPos
+            let obj = {
+              src: product.imgs.min,
+              width: pos.width,
+              height: pos.height,
+              start: {
+                left: pos.left,
+                top: pos.top
+              },
+              end: {
+                left: cartPos.left,
+                top: cartPos.top
+              }
             }
+            this.$addCart(obj)
+            // 更新或者添加成功了之后让num++
+            product.num++
           })
       } else {
-        this.$msgbox('提示', '未登录')
-          .then(() => {
+        // 没登录
+        this.$msg('提示', '未登录,请登录')
+          .then(action => {
             this.$router.push('/login')
           })
       }
@@ -96,12 +112,9 @@ export default {
 </script>
 <style lang="less" scoped>
 .bannar{
-  width: 100%;
-  a{
-    display: block;
-    img{
-      width: 100%;
-    }
+  height: 14rem;
+  img{
+    width: 100%;
   }
 }
 .acts-category-item{
@@ -180,3 +193,5 @@ export default {
   text-align: -webkit-match-parent;
 }
 </style>
+
+

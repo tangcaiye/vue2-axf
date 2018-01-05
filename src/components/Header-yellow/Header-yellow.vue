@@ -7,8 +7,8 @@
   </header>
 </template>
 <style lang="less" scoped>
-@import url("../../common/styles/variable.less");
-@import url("../../common/styles/mixin.less");
+@import url("../../styles/var.less");
+@import url("../../styles/mixin.less");
 
 header{
   position: fixed;
