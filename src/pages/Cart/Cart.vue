@@ -61,7 +61,7 @@
           </div>
           <table width="100%">
             <router-link tag="tr" class="spline-bottom" v-for="item in carts" :to="'/product-item/' + item.product_id" :key="item.id" v-if="item.num>0">
-              <td class="group-item-checkbox" :class="{'active': item.checked}" @click="changeChecked(item)">&nbsp;</td>
+              <td class="group-item-checkbox" :class="{'active': item.checked}" @click.stop="changeChecked(item)">&nbsp;</td>
               <td class="group-item-img">
                 <img v-lazy="item.product_img">
               </td>
