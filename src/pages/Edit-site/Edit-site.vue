@@ -28,7 +28,7 @@
             <tr class="spline-top">
               <th>所在城市</th>
               <td class="more">
-                <select class="select-city" :value="city" @change="bindChange">
+                <select class="select-city" v-model="city" @change="bindChange">
                   <option value="">请选择城市</option>
                   <option v-for="(item,index) in citys" :key="index" :value="item.city">{{item.city}}</option>
                 </select>
@@ -72,13 +72,14 @@ export default {
     this.$http.get(api.host + '/citys')
       .then(res => {
         this.citys = res.data
-        this.$store.commit('CHANGE_SELECTED_CITY', this.city)
         // 获取传过来的id,并通过id填充内容
         let siteId = this.$route.params.id
         let sites = this.sites
         for (let i = 0; i < sites.length; i++) {
           if (sites[i].id === Number(siteId)) {
             this.city = sites[i].city
+            this.$store.commit('CHANGE_SELECTED_CITY', this.city)
+            break
           }
         }
       })
