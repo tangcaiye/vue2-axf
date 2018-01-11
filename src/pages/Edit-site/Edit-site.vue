@@ -56,9 +56,20 @@
 <script>
 import api from '@/api'
 import HeaderGray from '@/components/Header-gray/Header-gray'
+// 用于判断上一个是不是选择地址页
+let selectSiteBol = false
 export default {
   components: {
     HeaderGray
+  },
+  beforeRouteEnter (to, from, next) {
+    // 在渲染该组件的对应路由被 confirm 前调用
+    // 不！能！获取组件实例 `this`
+    // 因为当守卫执行前，组件实例还没被创建
+    if (from.path === '/select-site') {
+      selectSiteBol = true
+    }
+    next()
   },
   // 因为城市列表都是一样的，所以只需要提取一次,所以使用created
   created () {
@@ -77,7 +88,6 @@ export default {
         let sites = this.sites
         for (let i = 0; i < sites.length; i++) {
           if (sites[i].id === Number(siteId)) {
-            this.city = sites[i].city
             this.$store.commit('CHANGE_SELECTED_CITY', this.city)
             break
           }
@@ -99,13 +109,15 @@ export default {
         this.$store.commit('CHANGE_SELECTED_CITY', sites[i].city)
         this.city = sites[i].city
         // this.$store.commit('SAVE_SELECTED_SITE', sites[i].site)
-        this.$store.commit('SAVE_SELECTED_SITEOBJ', {
-          name: sites[i].site,
-          location: {
-            lng: sites[i].x,
-            lat: sites[i].y
-          }
-        })
+        if (!selectSiteBol) {
+          this.$store.commit('SAVE_SELECTED_SITEOBJ', {
+            name: sites[i].site,
+            location: {
+              lng: sites[i].x,
+              lat: sites[i].y
+            }
+          })
+        }
       }
     }
   },

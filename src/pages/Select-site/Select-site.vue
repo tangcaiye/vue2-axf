@@ -167,8 +167,9 @@ export default {
       // 存储到vuex的selectedSite
       console.log(siteObj)
       this.$store.commit('SAVE_SELECTED_SITEOBJ', siteObj)
-      // 切换到添加地址页
-      this.$router.push('/add-site')
+      // 切换到上一个页面
+      // this.$router.push('/add-site')
+      this.$router.go(-1)
     },
     bindsearch: _.debounce(function (e) {
       var input = e.target.value
