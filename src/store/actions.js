@@ -153,9 +153,11 @@ export default {
     }
     if (cartObj.num > 1) {
       // 更改-》减少
+      let num = cartObj.num
+      num--
       // 发请求更新num数值
       return http.patch(api.host + '/carts/' + cartObj.id, {
-        num: cartObj.num
+        num: num
       })
         .then(res => {
           if (res.data.id > 0) {
