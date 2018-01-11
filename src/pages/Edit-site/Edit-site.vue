@@ -68,6 +68,8 @@ export default {
     // 因为当守卫执行前，组件实例还没被创建
     if (from.path === '/select-site') {
       selectSiteBol = true
+    } else {
+      selectSiteBol = false
     }
     next()
   },
