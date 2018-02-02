@@ -89,7 +89,6 @@
       </div>
     </div>
     <!-- 购物车没有商品的时候显示 -->
-    <!-- 有坑，还没填 -->
     <div class="main" v-show="!(carts.length>0)">
       <div class="empty-notice theme-font-gray">
         <div class="notice-icon"></div>

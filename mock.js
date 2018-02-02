@@ -50,7 +50,7 @@ var data = new Mock.mock({
       // 商品id
       'id|+1': 1,
       // 商品对应的分类id
-      'categoryId|1-20': 10,
+      'categoryId|1-21': 10,
       // 该商品对应的子分类下标
       'cidsIndex|0-3': 10,
       // 商品的图片
